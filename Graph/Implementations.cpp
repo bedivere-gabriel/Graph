@@ -1,9 +1,10 @@
 #include "Data.h"
 #include <iostream>
 #include <list>
+#include <vector>
 #include <string>
 
-void AdjecencyListGraph::createAdjecencyListGraph(int v, std::string names[]) {
+void AdjacencyListGraph::createAdjacencyListGraph(int v, std::string names[]) {
 	V = v;
 	places = new std::string[v];
 	adj = new std::list <std::pair<int, int>>[V];
@@ -16,11 +17,11 @@ void AdjecencyListGraph::createAdjecencyListGraph(int v, std::string names[]) {
 	}
 }
 
-void AdjecencyListGraph::addEdge(int u, int v, int w) {
+void AdjacencyListGraph::addEdge(int u, int v, int w) {
 	adj[u].push_back({v, w});
 }
 
-void AdjecencyListGraph::listPrint() {
+void AdjacencyListGraph::listPrint() {
 	for (int v = 0; v < V; ++v) {
 		std::cout << places[v] << "\t";
 		for (auto x : adj[v]) {
@@ -30,7 +31,7 @@ void AdjecencyListGraph::listPrint() {
 	}
 }
 
-void AdjecencyListGraph::DFSUtil(int v, bool visited[]) {
+void AdjacencyListGraph::DFSUtil(int v, bool visited[]) {
 	visited[v] = true;
 	std::cout << places[v] << "\t";
 
@@ -40,7 +41,7 @@ void AdjecencyListGraph::DFSUtil(int v, bool visited[]) {
 			DFSUtil(i->first, visited);
 }
 
-void AdjecencyListGraph::DFS(int v) {
+void AdjacencyListGraph::DFS(int v) {
 	bool* visited = new bool[V];
 	for (int i = 0; i < V; i++)
 		visited[i] = false;
@@ -48,7 +49,7 @@ void AdjecencyListGraph::DFS(int v) {
 	DFSUtil(v, visited);
 }
 
-void AdjecencyListGraph::BFS(int s) {
+void AdjacencyListGraph::BFS(int s) {
 	bool* visited = new bool[V];
 	for (int i = 0; i < V; i++)
 		visited[i] = false;
@@ -75,49 +76,11 @@ void AdjecencyListGraph::BFS(int s) {
 	}
 }
 
-void AdjecencyListGraph::pathCost(std::string start, std::string finish) {
-	int minimumCost = INT_MAX;
-	bool finishFound = false, startFound = false;
-	int startIndex = 0, finishIndex = 0;
-	bool pathFound;
-
-	for (int i = 0; i < start.size(); i++) 
-		start[i] = toupper(start[i]);
-	
-	for (int i = 0; i < finish.size(); i++)
-		finish[i] = toupper(finish[i]);
-
-	for (int i = 0; i < V; i++) {
-		if (places[i] == start) {
-			startFound = true;
-			startIndex = i;
-		}
-	}
-
-	for (int i = 0; i < V; i++) {
-		if (places[i] == finish) {
-			finishFound = true;
-			startIndex = i;
-		}
-	}
-
-	if (finishFound && startFound) {
-		if (startIndex == finishIndex)
-			std::cout << "Path Cost: " << 0 << std::endl;
-
-		else {
-			printMatrix(convert(adj, V), V);
-		}
-	}
-	else
-		std::cout << "Start and/or Finish not found" << std::endl;
-}
-
-AdjecencyListGraph::~AdjecencyListGraph() {
+AdjacencyListGraph::~AdjacencyListGraph() {
 	delete[] adj;
 }
 
-std::vector<std::vector<int>> AdjecencyListGraph::convert(std::list <std::pair<int, int>>* adj, int V) {
+std::vector<std::vector<int>> AdjacencyListGraph::convert(std::list <std::pair<int, int>>* adj, int V) {
 
 	std::vector<std::vector<int> > matrix(V, std::vector<int>(V, 0));
 	std::list <std::pair<int, int>>* ADJM = adj;
@@ -131,12 +94,73 @@ std::vector<std::vector<int>> AdjecencyListGraph::convert(std::list <std::pair<i
 	return matrix;
 }
 
-void AdjecencyListGraph::printMatrix(std::vector<std::vector<int>> adj, int V) {
+void AdjacencyListGraph::printMatrix(std::list <std::pair<int, int>>* adj, int V) {
+
+	adjMatrix = convert(adj, V);
+
+	std::cout << "\t";
 	for (int i = 0; i < V; i++) {
+		std::cout << places[i] << "\t";
+	}
+	std::cout << std::endl;
+	for (int i = 0; i < V; i++) {
+		std::cout << places[i] << "\t";
 		for (int j = 0; j < V; j++) {
-			std::cout << adj[i][j] << "   ";
+			std::cout << adjMatrix[i][j] << "\t";
 		}
 		std::cout << std::endl;
 	}
 	std::cout << std::endl;
+}
+
+void AdjacencyListGraph::displayMatrix() {
+	printMatrix(adj, V);
+}
+
+int AdjacencyListGraph::minDistance(int dist[], bool sptSet[]) {
+	int min = INT_MAX, min_index = 0;
+
+	for (int v = 0; v < V; v++)
+		if (sptSet[v] == false && dist[v] <= min)
+			min = dist[v], min_index = v;
+
+	return min_index;
+}
+
+void AdjacencyListGraph::DijkstraAlgo(std::vector<std::vector<int>> matrix, int start, int finish) {
+	int* dist;
+	dist = new int[V]; 
+
+	bool* sptSet; 
+	sptSet = new bool[V];
+	
+	for (int i = 0; i < V; i++)
+		dist[i] = INT_MAX, sptSet[i] = false;
+
+	dist[start] = 0;
+
+	for (int count = 0; count < V - 1; count++) {
+		int u = minDistance(dist, sptSet);
+
+		sptSet[u] = true;
+
+		for (int v = 0; v < V; v++)
+
+			if (!sptSet[v] && matrix[u][v]
+				&& dist[u] != INT_MAX
+				&& dist[u] + matrix[u][v] < dist[v])
+				dist[v] = dist[u] + matrix[u][v];
+	}
+
+	printSolution(dist, finish);
+}
+
+void AdjacencyListGraph::printSolution(int dist[], int finish) {
+	for (int i = 0; i < V; i++)
+		if (i == finish)
+			std::cout << "Path Cost: " << dist[i] << std::endl;
+}
+
+void AdjacencyListGraph::displayMinPathDistance(int start, int finish) {
+	DijkstraAlgo(adjMatrix, start, finish);
 }
